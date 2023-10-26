@@ -1,18 +1,22 @@
 from os import getenv
 import requests
-import json
 from dotenv import load_dotenv
 import discord
+from discord import app_commands
 from discord.ext import commands
+from tinydb import TinyDB, Query
 
 load_dotenv()
 
 intents = discord.Intents.default()
 intents.message_content = True
 
+db = TinyDB('db.json')
+usernames = db.table('usernames')
+
 # TODO: Add TOC in readme.md
-# TODO: Add description later
-bot = commands.Bot(command_prefix='$', intents=intents)
+bot = commands.Bot(command_prefix='$',
+                   description='LeetGo is a bot that allows programmers to keep track of their LeetCode progress.', intents=intents)
 
 
 @bot.event
@@ -21,17 +25,17 @@ async def on_ready():
     await bot.tree.sync()
 
 
-@bot.event
-async def on_message(message):
-    if message.author == bot.user.name:
-        return
+# @bot.event
+# async def on_message(message):
+#     if message.author == bot.user.name:
+#         return
 
-    if message.content.startswith('$hello'):
-        await message.channel.send('Hello!')
+#     if message.content.startswith('$hello'):
+#         await message.channel.send('Hello!')
 
 
 # TODO: Ask user for username upon joining
-# @client.event
+# @bot.event
 # async def on_member_join(member):
 #     await member.create_dm()
 #     await member.dm_channel.send(
@@ -39,14 +43,27 @@ async def on_message(message):
 #     )
 
 # TODO: Let user change their username & let existing users input their username
-# TODO: Implement a help command
+
+
+@bot.tree.command(name='set-username', description='Set or change your username')
+@app_commands.describe(username='What\'s your LeetCode username?')
+async def set_username(interaction: discord.Interaction, username: str):
+    usernames.insert({str(interaction.user): username})
+    await interaction.response.send_message(f'Done! {interaction.user}\'s username is now set to {username}')
+
+
+@bot.tree.command(name='resources', description='Resources for learning and improving at competitive programming')
+async def resources(interaction: discord.Interaction):
+    await interaction.response.send_message('Resources')
+
 
 @bot.tree.command(name='stats', description='Get basic LeetCode statistics')
-# @app_commands.describe()
 async def get_stats(interaction: discord.Interaction):
     # Ephemeral=True to show the message only to the executor of the slash command
+    # TODO: Implement a safety check here
+    # user = usernames.search(Query().key == (interaction.user))[0]
     results = requests.get(
-        'https://leetcodestats.cyclic.app/CodeDreamer06').json()
+        f'https://leetcodestats.cyclic.app/CodeDreamer06').json()
     fetch_map = {
         '☎️ Total Solved': 'totalSolved',
         '📊 Total Questions': 'totalQuestions',
