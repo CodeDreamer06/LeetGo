@@ -4,15 +4,36 @@ from dotenv import load_dotenv
 import discord
 from discord import app_commands
 from discord.ext import commands
-from tinydb import TinyDB, Query
+import sqlite3
 
 load_dotenv()
 
 intents = discord.Intents.default()
 intents.message_content = True
 
-db = TinyDB('db.json')
-usernames = db.table('usernames')
+connection = sqlite3.connect('storage.db')
+c = connection.cursor()
+c.execute('CREATE TABLE IF NOT EXISTS users(discord_username text, lc_username text)')
+
+
+def set_user(discord_username, lc_username):
+    user_exists = c.execute(
+        'SELECT * FROM users WHERE discord_username=?', (discord_username,)).fetchone()
+
+    if user_exists:
+        c.execute(
+            'UPDATE users SET lc_username=?, WHERE discord_username=?', (lc_username, discord_username))
+
+    else:
+        c.execute('INSERT INTO users VALUES (?, ?)',
+                  (discord_username, lc_username))
+
+    connection.commit()
+
+
+def get_lc_username(discord_username):
+    return c.execute('SELECT lc_username FROM users WHERE discord_username=?', (discord_username,)).fetchone()[0]
+
 
 # TODO: Add TOC in readme.md
 bot = commands.Bot(command_prefix='$',
@@ -42,13 +63,10 @@ async def on_ready():
 #         f'Hi {member.name}, welcome to my Discord server!'
 #     )
 
-# TODO: Let user change their username & let existing users input their username
-
-
 @bot.tree.command(name='set-username', description='Set or change your username')
 @app_commands.describe(username='What\'s your LeetCode username?')
 async def set_username(interaction: discord.Interaction, username: str):
-    usernames.insert({str(interaction.user): username})
+    set_user(str(interaction.user), username)
     await interaction.response.send_message(f'Done! {interaction.user}\'s username is now set to {username}')
 
 
@@ -61,9 +79,9 @@ async def resources(interaction: discord.Interaction):
 async def get_stats(interaction: discord.Interaction):
     # Ephemeral=True to show the message only to the executor of the slash command
     # TODO: Implement a safety check here
-    # user = usernames.search(Query().key == (interaction.user))[0]
+    username = get_lc_username(str(interaction.user))
     results = requests.get(
-        f'https://leetcodestats.cyclic.app/CodeDreamer06').json()
+        f'https://leetcodestats.cyclic.app/{username}').json()
     fetch_map = {
         '☎️ Total Solved': 'totalSolved',
         '📊 Total Questions': 'totalQuestions',
@@ -82,7 +100,6 @@ async def get_stats(interaction: discord.Interaction):
     details = '\n\n'.join(
         f'{key} : {results[value]}' for key, value in fetch_map.items())
 
-    # TODO: Make sure that the username exists
     await interaction.response.send_message('🏁 Your LeetCode stats: \n\n' + details)
 
 
