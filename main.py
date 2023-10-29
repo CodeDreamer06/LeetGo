@@ -4,50 +4,67 @@ from dotenv import load_dotenv
 import discord
 from discord import app_commands
 from discord.ext import commands
-import sqlite3
+import leetcode
+from leetcode.auth import get_csrf_cookie
+from database import Database
 
 load_dotenv()
 
 intents = discord.Intents.default()
 intents.message_content = True
 
-connection = sqlite3.connect('storage.db')
-c = connection.cursor()
-c.execute('CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, discord_username TEXT NOT NULL, lc_username TEXT, roadmap INTEGER, cohort INTEGER, goal_questions INTEGER, goal_duration INTEGER, goal_start_date TEXT)')
+leetcode_session = getenv('LEETCODE_SESSION')
+csrf_token = get_csrf_cookie(leetcode_session)
+configuration = leetcode.Configuration()
+configuration.api_key["x-csrftoken"] = csrf_token
+configuration.api_key["csrftoken"] = csrf_token
+configuration.api_key["LEETCODE_SESSION"] = leetcode_session
+configuration.api_key["Referer"] = "https://leetcode.com"
+configuration.debug = False
+
+api_instance = leetcode.DefaultApi(leetcode.ApiClient(configuration))
+graphql_request = leetcode.GraphqlQuery(
+    query="""
+        {
+        user {
+                username
+            }
+        }
+        """,
+    variables=leetcode.GraphqlQueryVariables(),
+)
+
+print(api_instance.graphql_post(body=graphql_request))
+
+db = Database()
+
+# api_response = api_instance.api_problems_topic_get(topic="algorithms")
+# solved_questions = []
+# for questions in api_response.stat_status_pairs:
+#     if questions.status == "ac":
+#         solved_questions.append(questions.stat.question__title)
+# print(solved_questions)
+# print("Total number of solved questions:", len(solved_questions))
 
 
 def set_user(discord_username, lc_username):
-    user_exists = c.execute(
-        'SELECT * FROM users WHERE discord_username=?', (discord_username,)).fetchone()
-
-    if user_exists:
-        c.execute(
-            'UPDATE users SET lc_username=? WHERE discord_username=?', (lc_username, discord_username))
+    """Adds or edits a user's name in the database"""
+    if db.does_the_user_exist():
+        db.change_user_name(discord_username, lc_username)
 
     else:
-        c.execute('INSERT INTO users (discord_username, lc_username) VALUES (?, ?)',
-                  (discord_username, lc_username))
-
-    connection.commit()
+        db.add_user(discord_username, lc_username)
 
 
-def get_lc_username(discord_username):
-    user = c.execute('SELECT lc_username FROM users WHERE discord_username=?',
-                     (discord_username,)).fetchone()
-    if user:
-        return user[0]
-    else:
-        return None
-
-
-# TODO: Add TOC in readme.md
 bot = commands.Bot(command_prefix='$',
                    description='LeetGo is a bot that allows programmers to keep track of their LeetCode progress.', intents=intents)
 
 
 @bot.event
 async def on_ready():
+    """Runs when the bot is up and ready"""
     print(f'Logged in as {bot.user.name}')
+    print(db.get_all_cohorts())
     await bot.tree.sync()
 
 
@@ -62,18 +79,72 @@ async def on_ready():
 @bot.tree.command(name='set-username', description='Set or change your username')
 @app_commands.describe(username='What\'s your LeetCode username?')
 async def set_username(interaction: discord.Interaction, username: str):
+    """Slash command that changes or adds the username to the database"""
     set_user(str(interaction.user), username)
     await interaction.response.send_message(f'Done! {interaction.user}\'s username is now set to {username}')
 
 
 @bot.tree.command(name='resources', description='Resources for learning and improving at competitive programming')
 async def resources(interaction: discord.Interaction):
+    """Slash command that displays resources to learn and improve at competitive programming"""
+    # TODO: Populate resources
     await interaction.response.send_message('Resources')
+
+
+@bot.tree.command(name='roadmap', description='Pick a roadmap to follow through')
+async def roadmap(interaction: discord.Interaction):
+    """Slash command that allows the user to select a roadmap"""
+    # TODO: Add roadmaps here
+    await interaction.response.send_message('Roadmap')
+
+
+@bot.tree.command(name='host-a-cohort', description='Host a cohort')
+@app_commands.describe(name='What\'s the name of the cohort?')
+async def host_a_cohort(interaction: discord.Interaction, name: str):
+    """Slash command that allows the user to host a cohort"""
+    channel_name = name.lower().replace(' ', '-')
+    existing_category = discord.utils.get(
+        interaction.guild.categories, name='Cohorts')
+    existing_channel = discord.utils.get(
+        existing_category.channels, name=channel_name)
+
+    if existing_channel:
+        await interaction.response.send_message(f'Channel **{channel_name}** already exists!', ephemeral=True)
+        return
+
+    await interaction.guild.create_text_channel(channel_name, category=existing_category)
+    await interaction.response.send_message(f'Channel **{channel_name}** has been created!')
+
+
+@bot.tree.command(name='join-a-cohort', description='Join a cohort')
+async def join_a_cohort(interaction: discord.Interaction):
+    """Slash command that allows the user to join a cohort"""
+    await interaction.response.send_message('Join a cohort')
+
+
+@bot.tree.command(name='view-remainders', description='View your remainders')
+async def view_remainders(interaction: discord.Interaction):
+    """Slash command that allows the user to view their remainders"""
+    await interaction.response.send_message('Remainders:')
+
+
+@bot.tree.command(name='set-remainders', description='Set your remainders')
+async def set_remainders(interaction: discord.Interaction):
+    """Slash command that allows the user to set remainders"""
+    await interaction.response.send_message('set')
+
+
+@bot.tree.command(name='set-goal', description='Set a goal for yourself')
+@app_commands.describe(questions='What\'s the number of questions you\'d like to solve?', months='In how many months would you want to achieve your goal?')
+async def set_goal(interaction: discord.Interaction, questions: int, months: int):
+    """Slash command that allows the user to set a goal for themselves"""
+    await interaction.response.send_message(f'You\'d like to solve {questions} questions in {months} months.')
 
 
 @bot.tree.command(name='stats', description='Get basic LeetCode statistics')
 async def get_stats(interaction: discord.Interaction):
-    username = get_lc_username(str(interaction.user))
+    """Slash command that allows the user to check their leetcode statistics"""
+    username = db.find_user(str(interaction.user))
     if not username:
         await interaction.response.send_message('Please set your username by using the /set-username command.', ephemeral=True)
         return
@@ -107,4 +178,4 @@ async def get_stats(interaction: discord.Interaction):
 
 
 bot.run(getenv("BOT_TOKEN"))
-connection.close()
+db.kill()
