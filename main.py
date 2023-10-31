@@ -49,7 +49,7 @@ db = Database()
 
 def set_user(discord_username, lc_username):
     """Adds or edits a user's name in the database"""
-    if db.does_the_user_exist():
+    if db.does_the_user_exist(discord_username):
         db.change_user_name(discord_username, lc_username)
 
     else:
