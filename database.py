@@ -47,14 +47,28 @@ class Database:
         else:
             return None
 
-    def get_all_cohorts(self):
-        # TODO: Define return data type
+    def get_all_cohorts(self) -> list:
         """Fetches all cohorts from the database"""
         return self.c.execute('SELECT * FROM cohorts').fetchall()
 
+    def get_user_cohort(self, discord_username: str) -> int:
+        """Fetches user's cohort id from the database"""
+        cohort = self.c.execute('SELECT cohort_id FROM users WHERE discord_username=?',
+                                (discord_username,)).fetchone()[0]
+        if not cohort:
+            return None
+        return int(cohort)
+
+    def create_cohort(self, cohort_name: str, host_discord_name: str):
+        """Lets a user to host a cohort"""
+        self.c.execute('INSERT INTO cohorts (name) VALUES (?)', (cohort_name,))
+        cohort_id = int(self.c.execute(
+            'SELECT cohort_id FROM cohorts WHERE name=?', (cohort_name, )).fetchone()[0])
+        self.update_user_cohort(host_discord_name, cohort_id)
+
     def update_user_cohort(self, discord_username, cohort_id):
         """Updates user's cohort in the database"""
-        self.c.execute('UPDATE users SET cohort=? WHERE discord_username=?',
+        self.c.execute('UPDATE users SET cohort_id=? WHERE discord_username=?',
                        (cohort_id, discord_username))
         self.connection.commit()
 

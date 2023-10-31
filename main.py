@@ -112,8 +112,13 @@ async def host_a_cohort(interaction: discord.Interaction, name: str):
         await interaction.response.send_message(f'Channel **{channel_name}** already exists!', ephemeral=True)
         return
 
+    if db.get_user_cohort(interaction.user.name):
+        await interaction.response.send_message('You cannot join more than one cohort at a time. Please exit your current cohort.', ephemeral=True)
+        return
+
+    db.create_cohort(channel_name, str(interaction.user))
     await interaction.guild.create_text_channel(channel_name, category=existing_category)
-    await interaction.response.send_message(f'Channel **{channel_name}** has been created!')
+    await interaction.response.send_message(f'Channel **{channel_name}** has been created! \nFor others to join this cohort, use the /join-a-cohort command, or react to this message with a thumbs up!', ephemeral=True)
 
 
 @bot.tree.command(name='join-a-cohort', description='Join a cohort')
