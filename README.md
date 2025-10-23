@@ -16,18 +16,18 @@ A Discord bot designed to help developers track their LeetCode progress, partici
 
 The bot provides the following slash commands:
 
-| Command | Description | Status |
-|---------|-------------|--------|
-| `/set-username <username>` | Link or update your LeetCode username | ✅ Implemented |
-| `/stats` | Display your LeetCode statistics and goal progress | ✅ Implemented |
-| `/host-a-cohort <name>` | Create a study cohort with a dedicated channel | ✅ Implemented |
-| `/join-a-cohort` | Join an existing cohort | ✅ Implemented |
-| `/leave-cohort` | Leave your current cohort | ✅ Implemented |
-| `/roadmap` | Select a learning roadmap to follow | ✅ Implemented |
-| `/set-goal <questions> <months>` | Set a goal for problem-solving progress | ✅ Implemented |
-| `/set-reminders <hour> <minute>` | Configure daily study reminders | ✅ Implemented |
-| `/view-reminders` | View your configured reminders | ✅ Implemented |
-| `/remove-reminders` | Stop receiving study reminders | ✅ Implemented |
+| Command | Description |
+|---------|-------------|
+| `/set-username <username>` | Link or update your LeetCode username |
+| `/stats` | Display your LeetCode statistics and goal progress |
+| `/host-a-cohort <name>` | Create a study cohort with a dedicated channel |
+| `/join-a-cohort` | Join an existing cohort |
+| `/leave-cohort` | Leave your current cohort |
+| `/roadmap` | Select a learning roadmap to follow |
+| `/set-goal <questions> <months>` | Set a goal for problem-solving progress |
+| `/set-reminders <hour> <minute>` | Configure daily study reminders |
+| `/view-reminders` | View your configured reminders |
+| `/remove-reminders` | Stop receiving study reminders |
 
 ## Getting Started
 
