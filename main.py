@@ -4,8 +4,6 @@ from dotenv import load_dotenv
 import discord
 from discord import app_commands
 from discord.ext import commands
-import leetcode
-from leetcode.auth import get_csrf_cookie
 from database import Database
 
 load_dotenv()
@@ -13,29 +11,9 @@ load_dotenv()
 intents = discord.Intents.default()
 intents.message_content = True
 
-leetcode_session = getenv('LEETCODE_SESSION')
-csrf_token = get_csrf_cookie(leetcode_session)
-configuration = leetcode.Configuration()
-configuration.api_key["x-csrftoken"] = csrf_token
-configuration.api_key["csrftoken"] = csrf_token
-configuration.api_key["LEETCODE_SESSION"] = leetcode_session
-configuration.api_key["Referer"] = "https://leetcode.com"
-configuration.debug = False
-
-api_instance = leetcode.DefaultApi(leetcode.ApiClient(configuration))
-graphql_request = leetcode.GraphqlQuery(
-    query="""
-        {
-        user {
-                username
-            }
-        }
-        """,
-    variables=leetcode.GraphqlQueryVariables(),
-)
-
-print(api_instance.graphql_post(body=graphql_request))
-
+# Initialize local database instance
+# Note: We removed early LeetCode GraphQL calls to avoid requiring LEETCODE_SESSION at startup.
+# The bot currently fetches stats via a public API in the /stats command.
 db = Database()
 
 # api_response = api_instance.api_problems_topic_get(topic="algorithms")
@@ -127,15 +105,15 @@ async def join_a_cohort(interaction: discord.Interaction):
     await interaction.response.send_message('Join a cohort')
 
 
-@bot.tree.command(name='view-remainders', description='View your remainders')
-async def view_remainders(interaction: discord.Interaction):
-    """Slash command that allows the user to view their remainders"""
-    await interaction.response.send_message('Remainders:')
+@bot.tree.command(name='view-reminders', description='View your reminders')
+async def view_reminders(interaction: discord.Interaction):
+    """Slash command that allows the user to view their reminders"""
+    await interaction.response.send_message('Reminders:')
 
 
-@bot.tree.command(name='set-remainders', description='Set your remainders')
-async def set_remainders(interaction: discord.Interaction):
-    """Slash command that allows the user to set remainders"""
+@bot.tree.command(name='set-reminders', description='Set your reminders')
+async def set_reminders(interaction: discord.Interaction):
+    """Slash command that allows the user to set reminders"""
     await interaction.response.send_message('set')
 
 

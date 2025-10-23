@@ -53,11 +53,11 @@ class Database:
 
     def get_user_cohort(self, discord_username: str) -> int:
         """Fetches user's cohort id from the database"""
-        cohort = self.c.execute('SELECT cohort_id FROM users WHERE discord_username=?',
-                                (discord_username,)).fetchone()[0]
-        if not cohort:
+        row = self.c.execute('SELECT cohort_id FROM users WHERE discord_username=?',
+                                (discord_username,)).fetchone()
+        if not row or row[0] is None:
             return None
-        return int(cohort)
+        return int(row[0])
 
     def create_cohort(self, cohort_name: str, host_discord_name: str):
         """Lets a user to host a cohort"""
