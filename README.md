@@ -1,97 +1,150 @@
 # LeetGo
 
-A Discord bot to help you track LeetCode progress, host study cohorts, and stay consistent with goals and reminders.
-
-Looking for extended documentation? See the GitBook: https://abhinavs-personal-organization.gitbook.io/leetgo-docs/
+A Discord bot designed to help developers track their LeetCode progress, participate in study cohorts, and maintain consistent coding practice through goals and reminders.
 
 ## Features
 
-- User profile linking: map your Discord account to your LeetCode username
-- LeetCode stats: fetch totals by difficulty, ranking, and contribution points via the public stats API
-- Cohorts: create a named cohort channel under a "Cohorts" category to host or study together
-- Goals: set target questions over a time period
-- Resources and roadmaps: placeholders for curated learning paths (commands stubbed for now)
-- Reminders: command stubs for viewing/setting study reminders
-- Local storage: lightweight SQLite database for users and cohorts
+- **Profile Linking**: Connect your Discord account to your LeetCode username
+- **Statistics Tracking**: View your LeetCode stats including problems solved by difficulty, ranking, and contribution points
+- **Study Cohorts**: Create and manage dedicated study groups with their own Discord channels
+- **Goal Setting**: Define personal targets for solving problems within specific timeframes
+- **Progress Monitoring**: Track your journey towards becoming a better problem solver
 
 ## Commands
 
-Slash commands registered by the bot:
-- /set-username <username> — Link or update your LeetCode username
-- /resources — Show learning resources (placeholder)
-- /roadmap — Pick a learning roadmap (placeholder)
-- /host-a-cohort <name> — Create a cohort with a dedicated text channel under the "Cohorts" category
-- /join-a-cohort — Join an existing cohort (placeholder)
-- /view-reminders — View your reminders (placeholder)
-- /set-reminders — Configure reminders (placeholder)
-- /set-goal <questions> <months> — Set a goal like "100 questions in 3 months"
-- /stats — Display your LeetCode stats based on your linked username
+The bot provides the following slash commands:
 
-## Quick start
+| Command | Description | Status |
+|---------|-------------|--------|
+| `/set-username <username>` | Link or update your LeetCode username | ✅ Implemented |
+| `/stats` | Display your LeetCode statistics | ✅ Implemented |
+| `/host-a-cohort <name>` | Create a study cohort with a dedicated channel | ✅ Implemented |
+| `/set-goal <questions> <months>` | Set a goal for problem-solving progress | ✅ Implemented |
+| `/join-a-cohort` | Join an existing cohort | 🚧 Coming Soon |
+| `/resources` | Access curated learning resources | 🚧 Coming Soon |
+| `/roadmap` | Select a learning roadmap to follow | 🚧 Coming Soon |
+| `/view-reminders` | View your configured reminders | 🚧 Coming Soon |
+| `/set-reminders` | Configure study reminders | 🚧 Coming Soon |
 
-Prerequisites:
-- Python 3.10+
-- A Discord bot application and token (see https://discord.com/developers)
+## Getting Started
 
-1) Clone and install
+### Prerequisites
+
+- Python 3.10 or higher
+- A Discord bot token (create one at the [Discord Developer Portal](https://discord.com/developers/applications))
+- A Discord server where you have permission to add bots
+
+### Installation
+
+1. **Clone the repository**
 
 ```bash
-git clone <this-repo-url>
+git clone https://github.com/CodeDreamer06/LeetGo.git
 cd LeetGo
+```
+
+2. **Set up a virtual environment**
+
+```bash
 python -m venv .venv
-source .venv/bin/activate  # on Windows: .venv\\Scripts\\activate
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+```
+
+3. **Install dependencies**
+
+```bash
 pip install -r requirements.txt
 ```
 
-2) Configure environment
+4. **Configure environment variables**
 
 ```bash
 cp .env.example .env
-# Edit .env and set BOT_TOKEN=<your discord bot token>
 ```
 
-3) Run the bot
+Edit the `.env` file and add your Discord bot token:
+
+```
+BOT_TOKEN=your_discord_bot_token_here
+```
+
+5. **Run the bot**
 
 ```bash
 python main.py
 ```
 
-Invite the bot to your server and ensure you have a category named "Cohorts" if you plan to use the cohort command.
+### Discord Server Setup
 
-## Configuration notes
+For the cohort feature to work properly, ensure your Discord server has a category named **"Cohorts"**. The bot will create cohort channels under this category.
 
-- LeetCode GraphQL: this project previously initialized a LeetCode GraphQL client on startup. That code has been removed to avoid requiring a LEETCODE_SESSION cookie. The /stats command uses a public stats API instead.
-- Database: an SQLite file (storage.db) will be created in the repo root. It is ignored by git.
+## Technical Details
 
-## Repository hygiene
+### Architecture
 
-- VS Code project files: .vscode/ is now ignored via .gitignore. If you already committed it, you can remove it from history with:
+- **main.py**: Contains the Discord bot implementation, command handlers, and event listeners
+- **database.py**: SQLite database wrapper managing users, cohorts, and relationships
+- **storage.db**: SQLite database file (auto-created, ignored by git)
 
-```bash
-git rm -r --cached .vscode
-git commit -m "chore: stop tracking .vscode"
-git push
+### Data Storage
+
+The bot uses SQLite for local data persistence, storing:
+- User profiles (Discord username, LeetCode username, goals)
+- Cohort information
+- User-cohort relationships
+
+### LeetCode API
+
+The bot uses a public LeetCode statistics API ([leetcodestats.cyclic.app](https://leetcodestats.cyclic.app)) to fetch user data without requiring authentication. This eliminates the need for LEETCODE_SESSION cookies.
+
+## Development
+
+### Project Structure
+
+```
+LeetGo/
+├── main.py           # Bot implementation and commands
+├── database.py       # Database layer
+├── requirements.txt  # Python dependencies
+├── .env.example      # Environment template
+├── .gitignore        # Git ignore rules
+└── README.md         # This file
 ```
 
-- macOS metadata files are ignored (.DS_Store).
+### Contributing
 
-## Project layout
+Contributions are welcome! Here's how you can help:
 
-- main.py — Discord bot, commands, and runtime
-- database.py — SQLite wrapper for users and cohorts
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## Roadmap / TODOs
+Please ensure your code follows Python best practices and includes appropriate documentation.
 
-- Implement /resources with curated links and categories
-- Implement /roadmap selection and persistence
-- Implement /join-a-cohort and cohort membership management
-- Implement reminders (scheduling and delivery)
-- Add tests and CI
+## Roadmap
 
-## Contributing
+- [ ] Implement cohort membership management (`/join-a-cohort`)
+- [ ] Add curated learning resources (`/resources`)
+- [ ] Create interactive roadmap selection (`/roadmap`)
+- [ ] Build reminder system with scheduling
+- [ ] Add automated testing and CI/CD pipeline
+- [ ] Implement progress visualization and analytics
+- [ ] Add support for competitive programming platforms beyond LeetCode
 
-Contributions are welcome! Please open an issue or pull request. Be kind and follow the included Code of Conduct.
+## Known Issues
+
+- Cohort leave functionality not yet implemented
+- Reminder system is currently a stub
+- Goal tracking doesn't persist progress updates
 
 ## License
 
-Add your preferred license (MIT/Apache-2.0/etc.) or remove this section.
+This project is open source and available under the MIT License.
+
+## Acknowledgments
+
+- LeetCode for providing the platform that inspired this bot
+- discord.py for the excellent Discord API wrapper
+- The competitive programming community for continuous inspiration
